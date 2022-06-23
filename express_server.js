@@ -1,5 +1,6 @@
 const express = require('express');
 const app =express();
+let ejs = require('ejs');
 const PORT = 8080;
 
 const urlDatabase = {
@@ -13,13 +14,13 @@ app.get('/', (req, res) => {
   res.send('Hello!');
 });
 
-app.get('/url', (req, res)=>{
+app.get('/urls', (req, res)=>{
   const templateVars ={urls : urlDatabase};
   res.render('urls_index', templateVars);
 })
 
-app.get('/:shortURL', (req, res) => {
-  const templateVars = {shortURL: req.params.shortURL, longURL: req.params.longURL};
+app.get('/urls/:shortURL', (req, res) => {
+  const templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars)
 })
 
