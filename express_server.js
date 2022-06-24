@@ -41,7 +41,7 @@ app.post('/urls', (req, res) => {
 
 app.get('/u/:shortURL', (req, res) => {
   let longURL = urlDatabase[req.url.slice(3)]
-  res.redirect(longURL)
+  res.redirect(302, longURL)
 })
 
 app.get('/urls/new', (req, res) => {
