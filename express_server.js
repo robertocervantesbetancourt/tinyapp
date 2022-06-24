@@ -2,11 +2,27 @@ const express = require('express');
 const app =express();
 let ejs = require('ejs');
 const PORT = 8080;
+const bodyParser = require("body-parser");
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+const generateRandomString = function () {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let newString = '';
+  for (let x = 0; x <= 6; x++){
+    newString += characters.charAt(Math.floor(Math.random() * characters.length));
+    //console.log(newString)
+  };
+  return(newString);
+};
+
+console.log(generateRandomString())
+
+app.use(bodyParser.urlencoded({extended: true}));
+
 
 app.set('view engine', 'ejs');
 
@@ -19,10 +35,20 @@ app.get('/urls', (req, res)=>{
   res.render('urls_index', templateVars);
 })
 
+app.post('/urls', (req, res) => {
+  console.log(req.body);
+  res.send('ok');
+})
+
+app.get('/urls/new', (req, res) => {
+  res.render('urls_new');
+})
+
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
-  res.render('urls_show', templateVars)
+  res.render('urls_show', templateVars);
 })
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
