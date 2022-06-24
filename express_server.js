@@ -33,10 +33,14 @@ app.get('/urls', (req, res)=>{
 })
 
 app.post('/urls', (req, res) => {
-  console.log(req.body);
   let tempShort = generateRandomString()
   urlDatabase[tempShort]= `http://${req.body.longURL}`;
   res.redirect(302,`urls/${tempShort}`);
+})
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  delete urlDatabase[req.url.slice(6, 12)];
+  res.redirect('/urls');
 })
 
 app.get('/u/:shortURL', (req, res) => {
