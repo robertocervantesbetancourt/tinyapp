@@ -14,12 +14,9 @@ const generateRandomString = function () {
   let newString = '';
   for (let x = 0; x <= 6; x++){
     newString += characters.charAt(Math.floor(Math.random() * characters.length));
-    //console.log(newString)
   };
   return(newString);
 };
-
-console.log(generateRandomString())
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -37,7 +34,14 @@ app.get('/urls', (req, res)=>{
 
 app.post('/urls', (req, res) => {
   console.log(req.body);
-  res.send('ok');
+  let tempShort = generateRandomString()
+  urlDatabase[tempShort]= `http://${req.body.longURL}`;
+  res.redirect(302,`urls/${tempShort}`);
+})
+
+app.get('/u/:shortURL', (req, res) => {
+  let longURL = urlDatabase[req.url.slice(3)]
+  res.redirect(longURL)
 })
 
 app.get('/urls/new', (req, res) => {
