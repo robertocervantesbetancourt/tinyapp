@@ -1,18 +1,26 @@
+//required libraries
 const express = require('express');
-const app =express();
-// let ejs = require('ejs');
-const PORT = 8080;
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
 
+//important variables
+const app =express();
+const PORT = 8080;
+
+//middleware
 app.use(bodyParser.urlencoded({extended: true}));
+//app.use(cookieParser);
 
+//view engine
 app.set('view engine', 'ejs');
 
+//tinyapp URL database
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+//Generate a random 6 character string to be used as tiny url
 const generateRandomString = function () {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let newString = '';
@@ -23,10 +31,10 @@ const generateRandomString = function () {
 };
 
 
-//GET
+///GET
 
 app.get('/', (req, res) => {
-  res.send('Hello!');
+  res.redirect(302, "/urls");
 });
 
 app.get('/urls', (req, res)=>{
@@ -48,7 +56,7 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 })
 
-//POST 
+///POST 
 
 app.post('/urls', (req, res) => {
   let tempShort = generateRandomString()
@@ -67,8 +75,13 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   res.redirect(302, `/urls/${newLongURL}`);
 });
 
+//login to set cookie
+app.post('/login', (req,res) => {
+  res.cookie('username', req.body.username)
+  res.redirect(302, '/urls')
+});
 
-
+//server listening
 app.listen(PORT,() => {
   console.log(`Example app listening on port ${PORT}`)
-})
+});
