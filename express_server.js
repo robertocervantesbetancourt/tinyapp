@@ -76,6 +76,11 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   res.redirect(302, `/urls/${newLongURL}`);
 });
 
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls')
+});
+
 //login to set cookie
 app.post('/login', (req,res) => {
   res.cookie('username', req.body.username)
