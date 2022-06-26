@@ -1,8 +1,12 @@
 const express = require('express');
 const app =express();
-let ejs = require('ejs');
+// let ejs = require('ejs');
 const PORT = 8080;
 const bodyParser = require("body-parser");
+
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.set('view engine', 'ejs');
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -18,10 +22,8 @@ const generateRandomString = function () {
   return(newString);
 };
 
-app.use(bodyParser.urlencoded({extended: true}));
 
-
-app.set('view engine', 'ejs');
+//GET
 
 app.get('/', (req, res) => {
   res.send('Hello!');
@@ -30,17 +32,6 @@ app.get('/', (req, res) => {
 app.get('/urls', (req, res)=>{
   const templateVars ={urls : urlDatabase};
   res.render('urls_index', templateVars);
-})
-
-app.post('/urls', (req, res) => {
-  let tempShort = generateRandomString()
-  urlDatabase[tempShort]= `http://${req.body.longURL}`;
-  res.redirect(302,`urls/${tempShort}`);
-})
-
-app.post('/urls/:shortURL/delete', (req, res) => {
-  delete urlDatabase[req.url.slice(6, 12)];
-  res.redirect('/urls');
 })
 
 app.get('/u/:shortURL', (req, res) => {
@@ -57,14 +48,26 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 })
 
+//POST 
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+app.post('/urls', (req, res) => {
+  let tempShort = generateRandomString()
+  urlDatabase[tempShort]= `http://${req.body.longURL}`;
+  res.redirect(302,`urls/${tempShort}`);
+})
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  delete urlDatabase[req.url.slice(6, 12)];
+  res.redirect('/urls');
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-})
+app.post('/urls/:shortURL/edit', (req, res) => {
+  let newLongURL = req.url.slice(6,12);
+  urlDatabase[newLongURL] = req.body.longURL;
+  res.redirect(302, `/urls/${newLongURL}`);
+});
+
+
 
 app.listen(PORT,() => {
   console.log(`Example app listening on port ${PORT}`)
