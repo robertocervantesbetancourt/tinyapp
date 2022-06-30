@@ -109,10 +109,14 @@ app.post('/login', (req,res) => {
 
 //register new user. For ID will user random number function
 app.post('/register', (req, res) => {
-  let userID = generateRandomString();
-  users[userID] = {id: userID, email: req.body.email, password: req.body.password};
-  res.cookie('user_id', userID);
-  res.redirect(302, "/urls");
+  if (req.body.email === '' || req.body.password === ''){
+    res.status(400).send('Please fill in email AND password');
+  } else {
+    let userID = generateRandomString();
+    users[userID] = {id: userID, email: req.body.email, password: req.body.password};
+    res.cookie('user_id', userID);
+    res.redirect(302, "/urls");
+  }
 })
 
 //server listening
