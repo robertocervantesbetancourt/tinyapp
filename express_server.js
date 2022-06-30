@@ -20,6 +20,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//users database
+const users = {
+  "userRandomID":{
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
+
 //Generate a random 6 character string to be used as tiny url
 const generateRandomString = function () {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -57,6 +71,11 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 })
 
+app.get('/register', (req,res) => {
+  const templateVars = {username : req.cookies['username']};
+  res.render('urls_registration', templateVars);
+});
+
 ///POST 
 
 app.post('/urls', (req, res) => {
@@ -86,6 +105,15 @@ app.post('/login', (req,res) => {
   res.cookie('username', req.body.username)
   res.redirect(302, '/urls')
 });
+
+//register new user. For ID will user random number function
+app.post('/register', (req, res) => {
+  let userID = generateRandomString();
+  users[userID] = {id: userID, email: req.body.email, password: req.body.password};
+  res.cookie('user_id', userID);
+  console.log(users);
+  res.redirect(302, "/urls");
+})
 
 //server listening
 app.listen(PORT,() => {
