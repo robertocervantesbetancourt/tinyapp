@@ -44,6 +44,16 @@ const generateRandomString = function () {
   return(newString);
 };
 
+//Function to check if an email is already in use
+const emailCheck = function (list, email) {
+  for (const id in list) {
+    if (list[id]['email'] === email){
+      return true;
+    } 
+  };
+  return false;
+}
+
 
 ///GET
 
@@ -72,7 +82,6 @@ app.get('/urls/:shortURL', (req, res) => {
 })
 
 app.get('/register', (req,res) => {
-  //const templateVars = {username : req.cookies['username']};
   const templateVars ={userid : req.cookies['user_id'] ,user : users, urls : urlDatabase};
   res.render('urls_registration', templateVars);
 });
@@ -97,7 +106,7 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls')
 });
 
@@ -110,7 +119,9 @@ app.post('/login', (req,res) => {
 //register new user. For ID will user random number function
 app.post('/register', (req, res) => {
   if (req.body.email === '' || req.body.password === ''){
-    res.status(400).send('Please fill in email AND password');
+    res.status(400).send('Error 400: Please fill in email AND password');
+  } else if (emailCheck(users, req.body.email)){
+    res.status(400).send('Error 400: Email already in use');
   } else {
     let userID = generateRandomString();
     users[userID] = {id: userID, email: req.body.email, password: req.body.password};
