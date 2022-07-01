@@ -19,6 +19,17 @@
               </form>
             <% } %>
           <% } %>
+      <% } else {%>
+        <form method="GET" action="/register">
+          <div style="margin-right: 20px ;">
+          <button class="btn btn btn-light my-2 my-sm-0" type="submit">Register</button>
+          </div>
+        </form>
+        <form method="GET" action="/login">
+          <div>
+          <button class="btn btn btn-light my-2 my-sm-0" type="submit">Login</button>
+          </div>
+        </form>
       <% } %>
   </nav>
 </header>
