@@ -135,7 +135,7 @@ app.get('/login', (req,res) => {
 
 app.post('/urls', (req, res) => {
   if (req.cookies['user_id'] === undefined) {
-    res.status(403).send('Error 401: Unauthorized to perform action')
+    res.status(403).send('Error 403: Unauthorized to perform action')
   } else {
     let tempShort = generateRandomString()
     urlDatabase[tempShort] = {};
@@ -147,15 +147,23 @@ app.post('/urls', (req, res) => {
     }
   })
 
-app.post('/urls/:shortURL/delete', (req, res) => {
-  delete urlDatabase[req.url.slice(6, 12)];
-  res.redirect('/urls');
+app.post('/urls/:shortURL/delete', (req, res) => { 
+  if(req.cookies['user_id'] === undefined || users[req.cookies['user_id']['id']] !== urlDatabase[req.url.slice(6,12)]['userID']){
+    res.status(403).send('Error 403: Unauthorized to perform action');
+  } else {
+    delete urlDatabase[req.url.slice(6, 12)];
+    res.redirect('/urls');
+  }
 });
 
 app.post('/urls/:shortURL/edit', (req, res) => {
-  let newLongURL = req.url.slice(6,12);
-  urlDatabase[newLongURL] = req.body.longURL;
-  res.redirect(302, `/urls/${newLongURL}`);
+  if(req.cookies['user_id'] === undefined || users[req.cookies['user_id']['id']] !== urlDatabase[req.url.slice(6,12)]['userID']){
+    res.status(403).send('Error 403: Unauthorized to perform action');
+  } else {
+    let newLongURL = req.url.slice(6,12);
+    urlDatabase[newLongURL] = req.body.longURL;
+    res.redirect(302, `/urls/${newLongURL}`);
+  }
 });
 
 app.post('/logout', (req, res) => {
