@@ -83,8 +83,12 @@ app.get('/urls', (req, res)=>{
 })
 
 app.get('/u/:shortURL', (req, res) => {
-  let longURL = urlDatabase[req.url.slice(3)]
-  res.redirect(302, longURL)
+  if (urlDatabase.hasOwnProperty(req.url.slice(3))){
+    let longURL = urlDatabase[req.url.slice(3)]['longURL']
+    res.redirect(302, longURL)
+  } else {
+    res.status(400).send('Error 400: Short id does not exist');
+  }
 })
 
 app.get('/urls/new', (req, res) => {
