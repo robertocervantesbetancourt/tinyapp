@@ -38,7 +38,7 @@ const users = {
 const generateRandomString = function () {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let newString = '';
-  for (let x = 0; x <= 6; x++){
+  for (let x = 0; x < 6; x++){
     newString += characters.charAt(Math.floor(Math.random() * characters.length));
   };
   return(newString);
@@ -86,8 +86,12 @@ app.get('/u/:shortURL', (req, res) => {
 })
 
 app.get('/urls/new', (req, res) => {
-  const templateVars = {userid : req.cookies['user_id'] ,user : users}
-  res.render('urls_new', templateVars);
+  if(users.hasOwnProperty(req.cookies['user_id'])){
+    const templateVars = {userid : req.cookies['user_id'] ,user : users}
+    res.render('urls_new', templateVars);
+  } else {
+    res.redirect(302, "/login")
+  }
 })
 
 app.get('/urls/:shortURL', (req, res) => {
@@ -108,13 +112,25 @@ app.get('/login', (req,res) => {
 ///POST 
 
 app.post('/urls', (req, res) => {
-  let tempShort = generateRandomString()
-  urlDatabase[tempShort]= `http://${req.body.longURL}`;
-  res.redirect(302,`urls/${tempShort}`);
+  if (req.cookies['user_id'] === undefined) {
+    res.status(403).send('Error 401: Unauthorized to perform action')
+  } else {
+    let tempShort = generateRandomString()
+    urlDatabase[tempShort]= `http://${req.body.longURL}`;
+    res.redirect(302,`urls/${tempShort}`);
+    }
+  })
+
+//If user is not logedin and tries to shorten a URL display error message
+app.post('/urls/error', (req, res) => {
+  res.status(403).send('Error 401: Unauthorized to perform action')
 })
 
 app.post('/urls/:shortURL/delete', (req, res) => {
+  console.log('before:', urlDatabase)
+  console.log(req.url.slice(6,12))
   delete urlDatabase[req.url.slice(6, 12)];
+  console.log('after:', urlDatabase);
   res.redirect('/urls');
 });
 
