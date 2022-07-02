@@ -16,8 +16,12 @@ app.set('view engine', 'ejs');
 
 //tinyapp URL database
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2":{
+    longURL: "http://www.lighthouselabs.ca"
+  },
+  "9sm5xK":{ 
+    longURL: "http://www.google.com"
+  }
 };
 
 //users database
@@ -48,11 +52,9 @@ const generateRandomString = function () {
 const emailCheck = function (list, email) {
   for (const id in list) {
     if (list[id]['email'] === email){
-      console.log('true')
       return id;
     } 
   };
-  console.log('false')
   return false;
 }
 
@@ -95,7 +97,7 @@ app.get('/urls/new', (req, res) => {
 })
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {userid : req.cookies['user_id'] ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = {userid : req.cookies['user_id'] ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL']};
   res.render('urls_show', templateVars);
 })
 
@@ -116,21 +118,19 @@ app.post('/urls', (req, res) => {
     res.status(403).send('Error 401: Unauthorized to perform action')
   } else {
     let tempShort = generateRandomString()
-    urlDatabase[tempShort]= `http://${req.body.longURL}`;
+    urlDatabase[tempShort] = {};
+    urlDatabase[tempShort]['longURL']= `http://${req.body.longURL}`;
+    urlDatabase[tempShort]['userID']= users[req.cookies['user_id']]['id'];
+    const usercookie = req.cookies['user_id'];
+    const userID = users[usercookie]['id']
+    console.log(usercookie, userID);
+    console.log(urlDatabase);
     res.redirect(302,`urls/${tempShort}`);
     }
   })
 
-//If user is not logedin and tries to shorten a URL display error message
-app.post('/urls/error', (req, res) => {
-  res.status(403).send('Error 401: Unauthorized to perform action')
-})
-
 app.post('/urls/:shortURL/delete', (req, res) => {
-  console.log('before:', urlDatabase)
-  console.log(req.url.slice(6,12))
   delete urlDatabase[req.url.slice(6, 12)];
-  console.log('after:', urlDatabase);
   res.redirect('/urls');
 });
 
@@ -149,8 +149,6 @@ app.post('/logout', (req, res) => {
 app.post('/login', (req,res) => {
   const email = emailCheck(users, req.body.email);
   const password = passwordCheck(users, email, req.body.password);
-  console.log(`email: ${email}, password: ${password}`)
-
   if(email && password){
       res.cookie('user_id', email)
       res.redirect(302, '/urls')
