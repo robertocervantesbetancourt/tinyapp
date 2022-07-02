@@ -48,10 +48,22 @@ const generateRandomString = function () {
 const emailCheck = function (list, email) {
   for (const id in list) {
     if (list[id]['email'] === email){
-      return true;
+      return id;
     } 
   };
   return false;
+}
+
+//function to check if password is the same
+const passwordCheck = function (list, id, password) {
+  if (id === false){
+    return false;
+  }
+  if(list[id]['password'] === password){
+      return true;
+  } else {
+  return false;
+    };
 }
 
 
@@ -115,17 +127,26 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls')
 });
 
-//login to set cookie
+//login to check if email, password and set cookie
 app.post('/login', (req,res) => {
-  res.cookie('username', req.body.username)
-  res.redirect(302, '/urls')
-});
+  const email = emailCheck(users, req.body.email);
+  const password = passwordCheck(users, email, req.body.password);
+  console.log(`email: ${email}, password: ${password}`)
+
+  if(email && password){
+      res.cookie('user_id', email)
+      res.redirect(302, '/urls')
+    } else {
+      res.status(403).send('Error 403: Incorrect email or password');
+    }
+  }
+);
 
 //register new user. For ID will user random number function
 app.post('/register', (req, res) => {
   if (req.body.email === '' || req.body.password === ''){
     res.status(400).send('Error 400: Please fill in email AND password');
-  } else if (emailCheck(users, req.body.email)){
+  } else if (emailCheck(users, req.body.email) === ''){
     res.status(400).send('Error 400: Email already in use');
   } else {
     let userID = generateRandomString();
