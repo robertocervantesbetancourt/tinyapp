@@ -17,10 +17,12 @@ app.set('view engine', 'ejs');
 //tinyapp URL database
 const urlDatabase = {
   "b2xVn2":{
-    longURL: "http://www.lighthouselabs.ca"
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
   },
   "9sm5xK":{ 
-    longURL: "http://www.google.com"
+    longURL: "http://www.google.com",
+    userID: "userRandomID"
   }
 };
 
@@ -70,6 +72,16 @@ const passwordCheck = function (list, id, password) {
     };
 }
 
+//Function to find all the user URL's
+const urlsForUser = function (id) {
+  let urls = [];
+  for (const u in urlDatabase){
+    if(urlDatabase[u]['userID'] === id){
+      urls.push(urlDatabase[u]['userID'])
+    }
+  } return urls;
+}
+
 
 ///GET
 
@@ -78,14 +90,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res)=>{
-  let count = 0;
-  for ( u in urlDatabase){
-    if (urlDatabase[u]['userID'] === req.cookies['user_id']){
-      count = count + 1;
-    }
+  if (req.cookies['user_id'] === undefined){
+    res.redirect(302, "/login");
+  } else {
+      const templateVars ={userid : req.cookies['user_id'], user : users, urls : urlDatabase, userURLS : urlsForUser(req.cookies['user_id'])};
+      res.render('urls_index', templateVars);
   }
-  const templateVars ={userid : req.cookies['user_id'], user : users, urls : urlDatabase, userURLS : count};
-  res.render('urls_index', templateVars);
 })
 
 app.get('/u/:shortURL', (req, res) => {
@@ -133,8 +143,6 @@ app.post('/urls', (req, res) => {
     urlDatabase[tempShort]['userID']= users[req.cookies['user_id']]['id'];
     const usercookie = req.cookies['user_id'];
     const userID = users[usercookie]['id']
-    console.log(usercookie, userID);
-    console.log(urlDatabase);
     res.redirect(302,`urls/${tempShort}`);
     }
   })
