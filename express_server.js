@@ -20,6 +20,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//users database
+const users = {
+  "userRandomID":{
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
+
 //Generate a random 6 character string to be used as tiny url
 const generateRandomString = function () {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -30,6 +44,30 @@ const generateRandomString = function () {
   return(newString);
 };
 
+//Function to check if an email is already in use
+const emailCheck = function (list, email) {
+  for (const id in list) {
+    if (list[id]['email'] === email){
+      console.log('true')
+      return id;
+    } 
+  };
+  console.log('false')
+  return false;
+}
+
+//function to check if password is the same
+const passwordCheck = function (list, id, password) {
+  if (id === false){
+    return false;
+  }
+  if(list[id]['password'] === password){
+      return true;
+  } else {
+  return false;
+    };
+}
+
 
 ///GET
 
@@ -38,7 +76,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res)=>{
-  const templateVars ={username : req.cookies['username'], urls : urlDatabase};
+  const templateVars ={userid : req.cookies['user_id'], user : users, urls : urlDatabase};
   res.render('urls_index', templateVars);
 })
 
@@ -48,14 +86,24 @@ app.get('/u/:shortURL', (req, res) => {
 })
 
 app.get('/urls/new', (req, res) => {
-  const templateVars = {username : req.cookies['username']}
+  const templateVars = {userid : req.cookies['user_id'] ,user : users}
   res.render('urls_new', templateVars);
 })
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {username : req.cookies['username'], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = {userid : req.cookies['user_id'] ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars);
 })
+
+app.get('/register', (req,res) => {
+  const templateVars ={userid : req.cookies['user_id'] ,user : users, urls : urlDatabase};
+  res.render('urls_registration', templateVars);
+});
+
+app.get('/login', (req,res) => {
+  const templateVars ={userid : req.cookies['user_id'] ,user : users, urls : urlDatabase};
+  res.render('urls_login', templateVars);
+});
 
 ///POST 
 
@@ -77,15 +125,38 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
-  res.redirect('/urls')
+  res.clearCookie('user_id');
+  res.redirect('/login')
 });
 
-//login to set cookie
+//login to check if email, password and set cookie
 app.post('/login', (req,res) => {
-  res.cookie('username', req.body.username)
-  res.redirect(302, '/urls')
-});
+  const email = emailCheck(users, req.body.email);
+  const password = passwordCheck(users, email, req.body.password);
+  console.log(`email: ${email}, password: ${password}`)
+
+  if(email && password){
+      res.cookie('user_id', email)
+      res.redirect(302, '/urls')
+    } else {
+      res.status(403).send('Error 403: Incorrect email or password');
+    }
+  }
+);
+
+//register new user. For ID will user random number function
+app.post('/register', (req, res) => {
+  if (req.body.email === '' || req.body.password === ''){
+    res.status(400).send('Error 400: Please fill in email AND password');
+  } else if (emailCheck(users, req.body.email) !== false){
+    res.status(400).send('Error 400: Email already in use');
+  } else {
+    let userID = generateRandomString();
+    users[userID] = {id: userID, email: req.body.email, password: req.body.password};
+    res.cookie('user_id', userID);
+    res.redirect(302, "/urls");
+  }
+})
 
 //server listening
 app.listen(PORT,() => {

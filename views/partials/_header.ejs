@@ -10,15 +10,25 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-      <% if (username) {%>
-        <h5 style="color:white">Welcome <%= username %>&nbsp;&nbsp;</h5>
-        <form method="POST" action="/logout">
-          <button class="btn btn btn-light my-2 my-sm-0" type="submit">Logout</button>
+      <% if (userid !== undefined) {%>
+          <% for (let u in user) {%>
+            <% if (u === userid) {%> 
+              <h5 style="color:white">Welcome <%= user[userid]['email'] %>&nbsp;&nbsp;</h5>
+              <form method="POST" action="/logout">
+                <button class="btn btn btn-light my-2 my-sm-0" type="submit">Logout</button>
+              </form>
+            <% } %>
+          <% } %>
+      <% } else {%>
+        <form method="GET" action="/register">
+          <div style="margin-right: 20px ;">
+          <button class="btn btn btn-light my-2 my-sm-0" type="submit">Register</button>
+          </div>
         </form>
-      <% } else { %>
-        <form class="form-inline" method="POST" action="/login">
-          <input class="form-control mr-sm-2" type="search" name="username" id="username" placeholder="Username">
-          <button class="btn btn btn-light my-2 my-sm-0" type="submit">Submit</button>
+        <form method="GET" action="/login">
+          <div>
+          <button class="btn btn btn-light my-2 my-sm-0" type="submit">Login</button>
+          </div>
         </form>
       <% } %>
   </nav>
