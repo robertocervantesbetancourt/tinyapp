@@ -48,9 +48,11 @@ const generateRandomString = function () {
 const emailCheck = function (list, email) {
   for (const id in list) {
     if (list[id]['email'] === email){
+      console.log('true')
       return id;
     } 
   };
+  console.log('false')
   return false;
 }
 
@@ -124,7 +126,7 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls')
+  res.redirect('/login')
 });
 
 //login to check if email, password and set cookie
@@ -146,7 +148,7 @@ app.post('/login', (req,res) => {
 app.post('/register', (req, res) => {
   if (req.body.email === '' || req.body.password === ''){
     res.status(400).send('Error 400: Please fill in email AND password');
-  } else if (emailCheck(users, req.body.email) === ''){
+  } else if (emailCheck(users, req.body.email) !== false){
     res.status(400).send('Error 400: Email already in use');
   } else {
     let userID = generateRandomString();
