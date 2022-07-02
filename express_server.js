@@ -78,7 +78,13 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res)=>{
-  const templateVars ={userid : req.cookies['user_id'], user : users, urls : urlDatabase};
+  let count = 0;
+  for ( u in urlDatabase){
+    if (urlDatabase[u]['userID'] === req.cookies['user_id']){
+      count = count + 1;
+    }
+  }
+  const templateVars ={userid : req.cookies['user_id'], user : users, urls : urlDatabase, userURLS : count};
   res.render('urls_index', templateVars);
 })
 
