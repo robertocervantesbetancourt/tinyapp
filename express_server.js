@@ -1,7 +1,8 @@
 //required libraries
 const express = require('express');
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const bcrypt = require ('bcryptjs');
 
 //important variables
 const app =express();
@@ -65,11 +66,11 @@ const passwordCheck = function (list, id, password) {
   if (id === false){
     return false;
   }
-  if(list[id]['password'] === password){
+  if(bcrypt.compareSync(password, list[id]['password'])) {
       return true;
   } else {
   return false;
-    };
+  };
 }
 
 //Function to find all the user URL's
@@ -175,7 +176,7 @@ app.post('/logout', (req, res) => {
 app.post('/login', (req,res) => {
   const email = emailCheck(users, req.body.email);
   const password = passwordCheck(users, email, req.body.password);
-  if(email && password){
+    if(email && password){
       res.cookie('user_id', email)
       res.redirect(302, '/urls')
     } else {
@@ -192,7 +193,8 @@ app.post('/register', (req, res) => {
     res.status(400).send('Error 400: Email already in use');
   } else {
     let userID = generateRandomString();
-    users[userID] = {id: userID, email: req.body.email, password: req.body.password};
+    let securePassword = bcrypt.hashSync(req.body.password, 10);
+    users[userID] = {id: userID, email: req.body.email, password: securePassword};
     res.cookie('user_id', userID);
     res.redirect(302, "/urls");
   }
