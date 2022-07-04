@@ -1,7 +1,7 @@
 //required libraries
 const express = require('express');
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require ('bcryptjs');
 
 //important variables
@@ -10,7 +10,10 @@ const PORT = 8080;
 
 //middleware
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['hola-vida-adios']
+}))
 
 //view engine
 app.set('view engine', 'ejs');
@@ -91,10 +94,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res)=>{
-  if (req.cookies['user_id'] === undefined){
+  if (req.session.user_id === undefined){
     res.redirect(302, "/login");
   } else {
-      const templateVars ={userid : req.cookies['user_id'], user : users, urls : urlDatabase, userURLS : urlsForUser(req.cookies['user_id'])};
+      const templateVars ={userid : req.session.user_id, user : users, urls : urlDatabase, userURLS : urlsForUser(req.session.user_id)};
       res.render('urls_index', templateVars);
   }
 })
@@ -109,8 +112,8 @@ app.get('/u/:shortURL', (req, res) => {
 })
 
 app.get('/urls/new', (req, res) => {
-  if(users.hasOwnProperty(req.cookies['user_id'])){
-    const templateVars = {userid : req.cookies['user_id'] ,user : users}
+  if(users.hasOwnProperty(req.session.user_id)){
+    const templateVars = {userid : req.session.user_id ,user : users}
     res.render('urls_new', templateVars);
   } else {
     res.redirect(302, "/login")
@@ -118,38 +121,38 @@ app.get('/urls/new', (req, res) => {
 })
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {userid : req.cookies['user_id'] ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL']};
+  const templateVars = {userid : req.session.user_id ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL']};
   res.render('urls_show', templateVars);
 })
 
 app.get('/register', (req,res) => {
-  const templateVars ={userid : req.cookies['user_id'] ,user : users, urls : urlDatabase};
+  const templateVars ={userid : req.session.user_id ,user : users, urls : urlDatabase};
   res.render('urls_registration', templateVars);
 });
 
 app.get('/login', (req,res) => {
-  const templateVars ={userid : req.cookies['user_id'] ,user : users, urls : urlDatabase};
+  const templateVars ={userid : req.session.user_id ,user : users, urls : urlDatabase};
   res.render('urls_login', templateVars);
 });
 
 ///POST 
 
 app.post('/urls', (req, res) => {
-  if (req.cookies['user_id'] === undefined) {
+  if (req.session.user_id === undefined) {
     res.status(403).send('Error 403: Unauthorized to perform action')
   } else {
     let tempShort = generateRandomString()
     urlDatabase[tempShort] = {};
     urlDatabase[tempShort]['longURL']= `http://${req.body.longURL}`;
-    urlDatabase[tempShort]['userID']= users[req.cookies['user_id']]['id'];
-    const usercookie = req.cookies['user_id'];
+    urlDatabase[tempShort]['userID']= users[req.session.user_id]['id'];
+    const usercookie = req.session.user_id;
     const userID = users[usercookie]['id']
     res.redirect(302,`urls/${tempShort}`);
     }
   })
 
 app.post('/urls/:shortURL/delete', (req, res) => { 
-  if(req.cookies['user_id'] === undefined || users[req.cookies['user_id']['id']] !== urlDatabase[req.url.slice(6,12)]['userID']){
+  if(req.session.user_id === undefined || users[req.session.user_id]['id'] !== urlDatabase[req.url.slice(6,12)]['userID']){
     res.status(403).send('Error 403: Unauthorized to perform action');
   } else {
     delete urlDatabase[req.url.slice(6, 12)];
@@ -158,17 +161,20 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 app.post('/urls/:shortURL/edit', (req, res) => {
-  if(req.cookies['user_id'] === undefined || users[req.cookies['user_id']['id']] !== urlDatabase[req.url.slice(6,12)]['userID']){
+  console.log(urlDatabase)
+  if(req.session.user_id === undefined || users[req.session.user_id]['id'] !== urlDatabase[req.url.slice(6,12)]['userID']){
     res.status(403).send('Error 403: Unauthorized to perform action');
   } else {
     let newLongURL = req.url.slice(6,12);
-    urlDatabase[newLongURL] = req.body.longURL;
+    urlDatabase[newLongURL]['longURL']= req.body.longURL;
+    urlDatabase[newLongURL]['userID'] = users[req.session.user_id]['id']
+    console.log(urlDatabase)
     res.redirect(302, `/urls/${newLongURL}`);
   }
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/login')
 });
 
@@ -177,7 +183,7 @@ app.post('/login', (req,res) => {
   const email = emailCheck(users, req.body.email);
   const password = passwordCheck(users, email, req.body.password);
     if(email && password){
-      res.cookie('user_id', email)
+      req.session.user_id = email
       res.redirect(302, '/urls')
     } else {
       res.status(403).send('Error 403: Incorrect email or password');
@@ -195,7 +201,7 @@ app.post('/register', (req, res) => {
     let userID = generateRandomString();
     let securePassword = bcrypt.hashSync(req.body.password, 10);
     users[userID] = {id: userID, email: req.body.email, password: securePassword};
-    res.cookie('user_id', userID);
+    req.session.user_id = userID;
     res.redirect(302, "/urls");
   }
 })
@@ -204,3 +210,4 @@ app.post('/register', (req, res) => {
 app.listen(PORT,() => {
   console.log(`Example app listening on port ${PORT}`)
 });
+

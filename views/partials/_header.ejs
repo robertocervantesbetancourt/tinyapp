@@ -11,8 +11,8 @@
       </div>
     </div>
       <% if (userid !== undefined) {%>
-          <% for (let u in user) {%>
-            <% if (u === userid) {%> 
+        <% for (let u in user) {%>
+          <% if (u === userid) {%> 
               <h5 style="color:white">Welcome <%= user[userid]['email'] %>&nbsp;&nbsp;</h5>
               <form method="POST" action="/logout">
                 <button class="btn btn btn-light my-2 my-sm-0" type="submit">Logout</button>
