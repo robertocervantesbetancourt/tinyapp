@@ -3,6 +3,8 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require ('bcryptjs');
+const [generateRandomString, emailCheck, passwordCheck, urlsForUser] = require('./helpers');
+
 
 //important variables
 const app =express();
@@ -44,47 +46,47 @@ const users = {
   }
 };
 
-//Generate a random 6 character string to be used as tiny url
-const generateRandomString = function () {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let newString = '';
-  for (let x = 0; x < 6; x++){
-    newString += characters.charAt(Math.floor(Math.random() * characters.length));
-  };
-  return(newString);
-};
+// //Generate a random 6 character string to be used as tiny url
+// const generateRandomString = function () {
+//   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+//   let newString = '';
+//   for (let x = 0; x < 6; x++){
+//     newString += characters.charAt(Math.floor(Math.random() * characters.length));
+//   };
+//   return(newString);
+// };
 
-//Function to check if an email is already in use
-const emailCheck = function (list, email) {
-  for (const id in list) {
-    if (list[id]['email'] === email){
-      return id;
-    } 
-  };
-  return false;
-}
+// //Function to check if an email is already in use
+// const emailCheck = function (list, email) {
+//   for (const id in list) {
+//     if (list[id]['email'] === email){
+//       return id;
+//     } 
+//   };
+//   return false;
+// }
 
-//function to check if password is the same
-const passwordCheck = function (list, id, password) {
-  if (id === false){
-    return false;
-  }
-  if(bcrypt.compareSync(password, list[id]['password'])) {
-      return true;
-  } else {
-  return false;
-  };
-}
+// //function to check if password is the same
+// const passwordCheck = function (list, id, password) {
+//   if (id === false){
+//     return false;
+//   }
+//   if(bcrypt.compareSync(password, list[id]['password'])) {
+//       return true;
+//   } else {
+//   return false;
+//   };
+// }
 
-//Function to find all the user URL's
-const urlsForUser = function (id) {
-  let urls = [];
-  for (const u in urlDatabase){
-    if(urlDatabase[u]['userID'] === id){
-      urls.push(urlDatabase[u]['userID'])
-    }
-  } return urls;
-}
+// //Function to find all the user URL's
+// const urlsForUser = function (id) {
+//   let urls = [];
+//   for (const u in urlDatabase){
+//     if(urlDatabase[u]['userID'] === id){
+//       urls.push(urlDatabase[u]['userID'])
+//     }
+//   } return urls;
+// }
 
 
 ///GET
@@ -97,7 +99,7 @@ app.get('/urls', (req, res)=>{
   if (req.session.user_id === undefined){
     res.redirect(302, "/login");
   } else {
-      const templateVars ={userid : req.session.user_id, user : users, urls : urlDatabase, userURLS : urlsForUser(req.session.user_id)};
+      const templateVars ={userid : req.session.user_id, user : users, urls : urlDatabase, userURLS : urlsForUser(req.session.user_id, urlDatabase)};
       res.render('urls_index', templateVars);
   }
 })
