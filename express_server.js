@@ -46,57 +46,21 @@ const users = {
   }
 };
 
-// //Generate a random 6 character string to be used as tiny url
-// const generateRandomString = function () {
-//   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-//   let newString = '';
-//   for (let x = 0; x < 6; x++){
-//     newString += characters.charAt(Math.floor(Math.random() * characters.length));
-//   };
-//   return(newString);
-// };
-
-// //Function to check if an email is already in use
-// const emailCheck = function (list, email) {
-//   for (const id in list) {
-//     if (list[id]['email'] === email){
-//       return id;
-//     } 
-//   };
-//   return false;
-// }
-
-// //function to check if password is the same
-// const passwordCheck = function (list, id, password) {
-//   if (id === false){
-//     return false;
-//   }
-//   if(bcrypt.compareSync(password, list[id]['password'])) {
-//       return true;
-//   } else {
-//   return false;
-//   };
-// }
-
-// //Function to find all the user URL's
-// const urlsForUser = function (id) {
-//   let urls = [];
-//   for (const u in urlDatabase){
-//     if(urlDatabase[u]['userID'] === id){
-//       urls.push(urlDatabase[u]['userID'])
-//     }
-//   } return urls;
-// }
-
-
 ///GET
 
+
+//If user is logged in redirect to /urls if not redirect to /login
 app.get('/', (req, res) => {
-  res.redirect(302, "/urls");
+  if (req.session.user_id !== undefined){
+    res.redirect(302, "/urls"); 
+  } else {
+    res.redirect(302, "/login");
+  }
 });
 
+//If there is no cookie or the cookie is not in the database redirect to /login, else display urls_index page
 app.get('/urls', (req, res)=>{
-  if (req.session.user_id === undefined){
+  if (req.session.user_id === undefined || !users.hasOwnProperty(req.session.user_id)){
     res.redirect(302, "/login");
   } else {
       const templateVars ={userid : req.session.user_id, user : users, urls : urlDatabase, userURLS : urlsForUser(req.session.user_id, urlDatabase)};
@@ -104,6 +68,7 @@ app.get('/urls', (req, res)=>{
   }
 })
 
+//Redirect short url to long url page, if short url is not in database then return 400 error
 app.get('/u/:shortURL', (req, res) => {
   if (urlDatabase.hasOwnProperty(req.url.slice(3))){
     let longURL = urlDatabase[req.url.slice(3)]['longURL']
@@ -113,6 +78,7 @@ app.get('/u/:shortURL', (req, res) => {
   }
 })
 
+//If logged in user is the onwer of the short URL display urls_new page, if not, redirect to /login
 app.get('/urls/new', (req, res) => {
   if(users.hasOwnProperty(req.session.user_id)){
     const templateVars = {userid : req.session.user_id ,user : users}
@@ -122,16 +88,24 @@ app.get('/urls/new', (req, res) => {
   }
 })
 
+//If logged in user is the onwer of the short URL display urls_show page, if not, redirect to /login
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {userid : req.session.user_id ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL']};
-  res.render('urls_show', templateVars);
+  if(req.session.user_id === urlDatabase[req.params.shortURL]['userID']){
+    const templateVars = {userid : req.session.user_id ,user : users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL']};
+    res.render('urls_show', templateVars);
+  } else {
+    res.redirect(302,"/login");
+  }
 })
 
+//Display urls_registration when client requests /register
 app.get('/register', (req,res) => {
   const templateVars ={userid : req.session.user_id ,user : users, urls : urlDatabase};
   res.render('urls_registration', templateVars);
 });
 
+
+//Display urls_login when client requests /login
 app.get('/login', (req,res) => {
   const templateVars ={userid : req.session.user_id ,user : users, urls : urlDatabase};
   res.render('urls_login', templateVars);
@@ -140,10 +114,12 @@ app.get('/login', (req,res) => {
 ///POST 
 
 app.post('/urls', (req, res) => {
+  //When posting to /urls, if the cookie is not defined display error 403
   if (req.session.user_id === undefined) {
     res.status(403).send('Error 403: Unauthorized to perform action')
   } else {
     let tempShort = generateRandomString()
+    //add new short URL, long URL and User id to urlDatabase object. After that redirect to urls/shortURL
     urlDatabase[tempShort] = {};
     urlDatabase[tempShort]['longURL']= `http://${req.body.longURL}`;
     urlDatabase[tempShort]['userID']= users[req.session.user_id]['id'];
@@ -153,20 +129,25 @@ app.post('/urls', (req, res) => {
     }
   })
 
+//When deleting a short URL, check if the user is the onwner of that shortURL, if so allow delete, else send error   
 app.post('/urls/:shortURL/delete', (req, res) => { 
   if(req.session.user_id === undefined || users[req.session.user_id]['id'] !== urlDatabase[req.url.slice(6,12)]['userID']){
     res.status(403).send('Error 403: Unauthorized to perform action');
   } else {
+    //delete short URL
     delete urlDatabase[req.url.slice(6, 12)];
     res.redirect('/urls');
   }
 });
 
+
+//When eidting a LongURL, check if the user is the onwner of that shortURL, if so allow edit, else send error  
 app.post('/urls/:shortURL/edit', (req, res) => {
   console.log(urlDatabase)
   if(req.session.user_id === undefined || users[req.session.user_id]['id'] !== urlDatabase[req.url.slice(6,12)]['userID']){
     res.status(403).send('Error 403: Unauthorized to perform action');
   } else {
+    //push modified long URL and user to urlDatabase object
     let newLongURL = req.url.slice(6,12);
     urlDatabase[newLongURL]['longURL']= req.body.longURL;
     urlDatabase[newLongURL]['userID'] = users[req.session.user_id]['id']
@@ -175,12 +156,13 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   }
 });
 
+//When loging out delete cookie
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/login')
 });
 
-//login to check if email, password and set cookie
+//login to check if email, password and set cookie exist in database
 app.post('/login', (req,res) => {
   const email = emailCheck(users, req.body.email);
   const password = passwordCheck(users, email, req.body.password);
